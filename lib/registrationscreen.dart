@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 import 'package:http/http.dart' as http;
+import 'package:progress_dialog/progress_dialog.dart';
 
 import 'loginscreen.dart';
 
@@ -11,6 +12,7 @@ class RegistrationScreen extends StatefulWidget {
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
+  ProgressDialog pr;
   bool _rememberMe = false;
   TextEditingController _emailController = new TextEditingController();
   TextEditingController _passwordController1 = new TextEditingController();
@@ -145,10 +147,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           fontSize: 16.0);
       return;
     }
-
+    if (!validateEmail(_email)) {
+      Fluttertoast.showToast(
+          msg: "Check your email format",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.TOP,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0);
+      return;
+    }
     if (_password1 != _password2) {
       Fluttertoast.showToast(
-        msg: "Register Failed",
+        msg: "Please use same password.",
         toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.TOP,
           timeInSecForIosWeb: 1,
@@ -156,6 +168,29 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           textColor: Colors.white,
           fontSize: 16.0);
           return;
+    }
+    if (_password1.length < 5) {
+      Fluttertoast.showToast(
+          msg: "Password should atleast 5 characters long ",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.TOP,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0);
+      return;
+    }
+    if (!validatePassword(_password1)) {
+      Fluttertoast.showToast(
+          msg:
+              "Password should contain atleast contain capital letter, small letter and number ",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.TOP,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0);
+      return;
     }
     //checking the data integrity
 
@@ -186,7 +221,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         });
   }
 
-  void _registerUser(String email, String password) {
+  Future<void> _registerUser(String email, String password) async {
+    pr = ProgressDialog(context,
+    type: ProgressDialogType.Normal, isDismissible: true, showLogs: true);
+    await pr.show();
     http.post(
         Uri.parse(
             "https://javathree99.com/s270088/electricalvendor/php/register_user.php"),
@@ -204,6 +242,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           backgroundColor: Colors.black45,
           textColor: Colors.white,
           fontSize: 16.0);
+          pr.hide().then((isHidden){
+            print(isHidden);
+          });
+           Navigator.pop(context);
+        Navigator.push(
+            context, MaterialPageRoute(builder: (content) => LoginScreen()));
       }else{
         Fluttertoast.showToast(
           msg: "Registration Failed",
@@ -213,10 +257,37 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           backgroundColor: Colors.black45,
           textColor: Colors.white,
           fontSize: 16.0);
+          pr.hide().then((isHidden){
+            print(isHidden);
+          });
       }
     });
   }
 
+  bool validateEmail(String value) {
+    Pattern pattern =
+        r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+    RegExp regex = new RegExp(pattern);
+    return (!regex.hasMatch(value)) ? false : true;
+  }
+
+  bool validatePassword(String value) {
+    String pattern = r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{5,}$';
+    RegExp regExp = new RegExp(pattern);
+    print(regExp.hasMatch(value));
+    return regExp.hasMatch(value);
+  }
+
+   String titleCase(str) {
+    var retStr = "";
+    List userdata = str.toLowerCase().split(' ');
+    print(userdata[0].toString());
+    for (int i = 0; i < userdata.length; i++) {
+      retStr += userdata[i].charAt(0).toUpperCase + " ";
+    }
+    print(retStr);
+    return retStr;
+   }
   void _togglePass(){
     setState(() {
       _obscureText = !_obscureText;

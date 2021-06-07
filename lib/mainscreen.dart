@@ -1,4 +1,8 @@
+import 'package:electricalvendor/loginscreen.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:http/http.dart' as http;
 
 class MainScreen extends StatefulWidget {
   @override
@@ -6,20 +10,196 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  double screenHeight;
+  double screenWidth;
+  List productlist = [];
+  String _titlecenter = "Loading...";
+  TextEditingController _srcController = new TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProduct();
+  }
+
   @override
   Widget build(BuildContext context) {
+    screenHeight = MediaQuery.of(context).size.height;
+    screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Main Screen'),
-        backgroundColor: Colors.pinkAccent[400],
+        title: Text('HOMEPAGE'),
+        backgroundColor: Color.fromRGBO(191, 30, 46, 50),
       ),
-      backgroundColor: Colors.teal[50],
-      body: Center(
-           child: Container(
-              child: Text('Welcome',
-                  style: TextStyle(color: Colors.black54, fontSize: 22)),
+      drawer: Drawer(
+        child: ListView(
+          children: [
+            DrawerHeader(
+              child: Text("MENU",
+                  style: TextStyle(color: Colors.white, fontSize: 20)),
+              decoration: BoxDecoration(color: Colors.red.shade900),
             ),
+            ListTile(
+              title: Text("Services", style: TextStyle(fontSize: 16)),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text("Renting", style: TextStyle(fontSize: 16)),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text("Products", style: TextStyle(fontSize: 16)),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text("My Account", style: TextStyle(fontSize: 16)),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text("Contact Us", style: TextStyle(fontSize: 16)),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+                title: Text("Logout", style: TextStyle(fontSize: 16)),
+                onTap: _logout),
+          ],
         ),
+      ),
+      body: Center(
+        child: Container(
+            child: Column(
+          children: [
+            TextFormField(
+              controller: _srcController,
+              decoration: InputDecoration(
+                hintText: "Search product",
+                suffixIcon: IconButton(
+                  onPressed: () => _loadProduct(),
+                  icon: Icon(Icons.search),
+                ),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                    borderSide: BorderSide(color: Colors.white24)),
+              ),
+            ),
+            if (productlist.isEmpty)
+              Flexible(child: Center(child: Text(_titlecenter)))
+            else
+              Flexible(
+                  child: Center(
+                      child: GridView.count(
+                          crossAxisCount: 2,
+                          childAspectRatio: (screenWidth / screenHeight) / 1,
+                          children: List.generate(productlist.length, (index) {
+                            return Padding(
+                                padding: const EdgeInsets.all(7),
+                                child: Card(
+                                  elevation: 10,
+                                  child: SingleChildScrollView(
+                                      child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        height: screenHeight / 5,
+                                        width: screenWidth / 1.1,
+                                        child: CachedNetworkImage(
+                                          imageUrl:
+                                              "https://javathree99.com/s270088/electricalvendor/images/product/${productlist[index]['prid']}.jpg",
+                                        ),
+                                      ),
+                                      SizedBox(height: 2),
+                                      Padding(
+                                          padding:
+                                              EdgeInsets.fromLTRB(10, 0, 0, 0),
+                                          child: Text(
+                                              "Product ID: " +
+                                                  productlist[index]['prid'],
+                                              style: TextStyle(fontSize: 16))),
+                                      SizedBox(height: 2),
+                                      Padding(
+                                          padding:
+                                              EdgeInsets.fromLTRB(10, 0, 0, 0),
+                                          child: Text(
+                                              "Name: " +
+                                                  productlist[index]['prname'],
+                                              style: TextStyle(fontSize: 16))),
+                                      SizedBox(height: 2),
+                                      Padding(
+                                          padding:
+                                              EdgeInsets.fromLTRB(10, 0, 0, 0),
+                                          child: Text(
+                                              "Type: " +
+                                                  productlist[index]['prtype'],
+                                              style: TextStyle(fontSize: 16))),
+                                      SizedBox(height: 2),
+                                      Padding(
+                                          padding:
+                                              EdgeInsets.fromLTRB(10, 0, 0, 0),
+                                          child: Text(
+                                              "Price:RM " +
+                                                  productlist[index]['prprice'],
+                                              style: TextStyle(fontSize: 16))),
+                                      SizedBox(height: 2),
+                                      Padding(
+                                          padding:
+                                              EdgeInsets.fromLTRB(10, 0, 0, 0),
+                                          child: Text(
+                                              "Quantity: " +
+                                                  productlist[index]['prqty'],
+                                              style: TextStyle(fontSize: 16))),
+                                      SizedBox(height: 2),
+                                    ],
+                                  )),
+                                ));
+                          })))),
+          ],
+        )),
+      ),
+      /*floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (content) => NewProduct()));
+        },
+        child: Icon(Icons.add),
+      ),*/
     );
   }
+
+  void _loadProduct() {
+    http.post(
+        Uri.parse(
+            "https://javathree99.com/s270088/electricalvendor/php/loadproduct.php"),
+        body: {}).then((response) {
+      if (response.body == "nodata") {
+        _titlecenter = "Sorry no product";
+        return;
+      } else {
+        
+        setState(() {
+        var jsondata = json.decode(response.body);
+        productlist = jsondata["products"];
+          print(productlist);
+        });
+      }
+    });
+  }
+
+  void _logout() {
+    Navigator.push(
+        context, MaterialPageRoute(builder: (content) => LoginScreen()));
+  }
+
+  
 }

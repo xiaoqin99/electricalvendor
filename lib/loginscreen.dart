@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'mainscreen.dart';
@@ -130,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
             backgroundColor: Colors.black45,
             textColor: Colors.white,
             fontSize: 16.0);
-        Navigator.push(
+            Navigator.push(
             context, MaterialPageRoute(builder: (content) => MainScreen()));
       } else {
         Fluttertoast.showToast(
